@@ -3,33 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Test</title>
+    <title>Hedge - Fantasy Trading</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Lexend', sans-serif;
+            background: linear-gradient(135deg, #a0c4ff, #caf0f8);
+            color: white;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 4rem;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeIn 1s forwards ease-in-out;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 15px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        .section:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .about {
+            font-size: 1.2rem;
+            font-weight: 300;
+            line-height: 1.5;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+    </style>
 </head>
-<style>
-    /* style.css */
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    margin: 0;
-    padding: 0;
-}
-
-h1 {
-    color: #333;
-    text-align: center;
-    margin-top: 50px;
-}
-
-p {
-    color: #555;
-    text-align: center;
-    font-size: 1.2em;
-}
-
-</style>
 <body>
-    <h1>Hello, World!</h1>
-    <p>This is a simple test with Flask.</p>
+    <div class="container">
+        <h1>Hedge</h1>
+        <div class="section">
+            <h2>What is Trading?</h2>
+            <p>Trading is the act of buying and selling assets, such as stocks, to generate profit. Understanding trading helps develop financial literacy and strategic thinking. Markets operate on principles of supply and demand, and traders utilize various strategies like fundamental and technical analysis to make informed decisions.</p>
+        </div>
+        <div class="section">
+            <h2>Why is Trading Important?</h2>
+            <p>Trading plays a crucial role in the global economy, driving liquidity, price discovery, and wealth creation. Learning about trading equips individuals with the tools to navigate financial markets, make informed investment decisions, and prepare for long-term financial success.</p>
+        </div>
+        <div class="section">
+            <h2>How Hedge Works</h2>
+            <p>Hedge is a fantasy trading platform designed to simulate real-world stock trading using fake money. It provides a risk-free environment for users to experiment with investment strategies, analyze market trends, and track their portfolio performance.</p>
+            <ul>
+                <li><strong>Data Collection:</strong> Hedge uses <code>yfinance</code> to fetch real-time market data, including stock prices, volume, and historical trends.</li>
+                <li><strong>Backend Processing:</strong> A <code>Flask</code>-based backend handles data requests, processes trades, and updates user portfolios.</li>
+                <li><strong>Local Data Tracking:</strong> User transactions and portfolio performance are stored locally, ensuring efficient tracking and retrieval.</li>
+                <li><strong>User Interface:</strong> A clean and interactive web interface allows users to explore stocks, make trades, and monitor their investments seamlessly.</li>
+            </ul>
+        </div>
+        <div class="section">
+            <h2>Key Features</h2>
+            <p>Hedge is packed with features to create an engaging and realistic trading experience:</p>
+            <ul>
+                <li><strong>Live Stock Data:</strong> Access real-time stock prices and trends.</li>
+                <li><strong>Portfolio Management:</strong> Track your investments and assess performance over time.</li>
+                <li><strong>Simulated Trading:</strong> Execute buy/sell orders without real-world financial risk.</li>
+                <li><strong>Educational Resources:</strong> Learn fundamental and technical analysis techniques.</li>
+                <li><strong>Market Insights:</strong> Receive periodic updates on market trends and investment strategies.</li>
+            </ul>
+        </div>
+        <div class="section about">
+            <h2>About Me</h2>
+            <p>I'm a junior at Prosper High School, passionate about finance and technology. I created Hedge to expand access to stock trading knowledge in a risk-free and engaging manner. By leveraging real market data and a structured learning approach, my goal is to make financial literacy more accessible to students and aspiring traders.</p>
+        </div>
+        <div class="footer">
+            &copy; 2025 Hedge | Created with passion for financial education.
+        </div>
+    </div>
 </body>
 </html>
