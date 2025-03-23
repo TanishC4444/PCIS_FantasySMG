@@ -1,19 +1,29 @@
-from flask import Flask, render_template
-import webbrowser
 import threading
-
-#GIT Code Green Button Zip File Download
+import webbrowser
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
 @app.route('/')
-def home():
-    return render_template('index.html')
+def main():
+    return render_template('main.html')
 
+@app.route('/learn')
+def learn():
+    return render_template('learn.html')
+
+@app.route('/practice')
+def practice():
+    return render_template('practice.html')
+
+@app.route('/simulator')
+def simulator():
+    return render_template('simulator.html')
+
+# Function to open browser automatically
 def open_browser():
-    webbrowser.get('open -a "Google Chrome" %s').open("http://127.0.0.1:5000/")
+    webbrowser.open("http://127.0.0.1:5000")
 
 if __name__ == '__main__':
-    # Start a timer to open the browser after Flask starts
-    threading.Timer(1.5, open_browser).start()  # Delay by 1.5 seconds
+    threading.Timer(1.25, open_browser).start()  # Delay to ensure server starts first
     app.run(debug=True)
