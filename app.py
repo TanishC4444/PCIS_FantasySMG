@@ -77,6 +77,22 @@ def get_stock_data():
 
     return jsonify({"timestamps": timestamps, "prices": prices, "extra_data": extra_data})
 
+@app.route('/get_trades', methods=['GET'])
+def get_trades():
+    if not os.path.exists(USER_DATA_FILE) or os.stat(USER_DATA_FILE).st_size == 0:
+        return jsonify([])
+
+    df = pd.read_csv(USER_DATA_FILE)
+
+    # Round all numerical values
+    df["Price Bought"] = df["Price Bought"].round(2)
+    df["Current Value"] = df["Current Value"].round(2)
+    df["Earnings"] = df["Earnings"].round(2)
+    df["Change %"] = df["Change %"].round(2)
+
+    trades = df.to_dict(orient="records")  
+    return jsonify(trades)
+
 @app.route('/trade', methods=['GET'])
 def trade_stock():
     ticker = request.args.get('ticker', '').upper()
@@ -87,8 +103,8 @@ def trade_stock():
         return jsonify({"error": "Invalid trade parameters"}), 400
 
     stock = yf.Ticker(ticker)
-    current_price = stock.history(period="1d", interval="1m").iloc[-1]['Close']
-    total_cost = quantity * current_price
+    current_price = round(stock.history(period="1d", interval="1m").iloc[-1]['Close'], 2)
+    total_cost = round(quantity * current_price, 2)
 
     balance = get_balance()
     if trade_type == "buy" and total_cost > balance:
@@ -96,17 +112,22 @@ def trade_stock():
 
     df = pd.read_csv(USER_DATA_FILE)
     new_trade = pd.DataFrame({
-        "Ticker": [ticker], "Date Bought": [datetime.now().strftime('%Y-%m-%d %H:%M')],
-        "Quantity": [quantity], "Price Bought": [current_price], "Current Value": [current_price * quantity],
-        "Earnings": [0], "Change %": [0], "Status": [trade_type.upper()]
+        "Ticker": [ticker], 
+        "Date Bought": [datetime.now().strftime('%Y-%m-%d %H:%M')],
+        "Quantity": [quantity], 
+        "Price Bought": [round(current_price, 2)], 
+        "Current Value": [round(current_price * quantity, 2)],
+        "Earnings": [0], 
+        "Change %": [0], 
+        "Status": [trade_type.upper()]
     })
     df = pd.concat([df, new_trade], ignore_index=True)
     df.to_csv(USER_DATA_FILE, index=False)
 
     if trade_type == "buy":
-        update_balance(-total_cost)  # Deduct balance
+        update_balance(-total_cost)  
     elif trade_type == "sell":
-        update_balance(total_cost)  # Add balance
+        update_balance(total_cost)  
 
     return jsonify({"success": f"{trade_type.capitalize()} {quantity} shares of {ticker} at ${current_price:.2f}", "balance": get_balance()})
 

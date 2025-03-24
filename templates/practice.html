@@ -89,11 +89,18 @@
         <div class="tables">
             <h3>Owned Stocks</h3>
             <table id="ownedStocksTable">
-                <tr><th>Ticker</th><th>Date Bought</th><th>Quantity</th><th>Price Bought</th><th>Current Value</th><th>Earnings (% Change)</th></tr>
+                <thead>
+                    <tr><th>Ticker</th><th>Date Bought</th><th>Quantity</th><th>Price Bought</th><th>Current Value</th><th>Earnings (% Change)</th></tr>
+                </thead>
+                <tbody></tbody>
             </table>
+
             <h3>Pending Orders</h3>
             <table id="pendingOrdersTable">
-                <tr><th>Ticker</th><th>Quantity</th><th>Limit Price</th><th>Status</th></tr>
+                <thead>
+                    <tr><th>Ticker</th><th>Quantity</th><th>Limit Price</th><th>Status</th></tr>
+                </thead>
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -174,38 +181,53 @@
                 .then(data => document.getElementById("balance").textContent = data.balance.toFixed(2));
         }
 
-        function buyStock() {
-            const ticker = document.getElementById('ticker').value.trim().toUpperCase();
-            const quantity = document.getElementById('quantity').value;
-            fetch(`/trade?type=buy&ticker=${ticker}&quantity=${quantity}`)
+        function updateTables() {
+            fetch('/get_trades')
                 .then(response => response.json())
                 .then(data => {
-                    alert(data.success || data.error);
-                    updateBalanceDisplay();
-                });
-        }
+                    const ownedStocksTable = document.getElementById("ownedStocksTable").querySelector("tbody");
+                    const pendingOrdersTable = document.getElementById("pendingOrdersTable").querySelector("tbody");
+                    ownedStocksTable.innerHTML = "";
+                    pendingOrdersTable.innerHTML = "";
 
-        function sellStock() {
+                    data.forEach(trade => {
+                        const row = `<tr>
+                            <td>${trade.Ticker}</td>
+                            <td>${trade["Date Bought"]}</td>
+                            <td>${trade.Quantity}</td>
+                            <td>${trade["Price Bought"].toFixed(2)}</td>
+                            <td>${trade["Current Value"].toFixed(2)}</td>
+                            <td>${trade.Earnings.toFixed(2)} (${trade["Change %"].toFixed(2)}%)</td>
+                        </tr>`;
+
+                        if (trade.Status === "PENDING") {
+                            pendingOrdersTable.innerHTML += row;
+                        } else {
+                            ownedStocksTable.innerHTML += row;
+                        }
+                    });
+                })
+                .catch(error => console.error("Error loading trade data:", error));
+                }
+
+
+        function buyStock() { fetchTrade("buy"); }
+        function sellStock() { fetchTrade("sell"); }
+        function fetchTrade(type) {
             const ticker = document.getElementById('ticker').value.trim().toUpperCase();
             const quantity = document.getElementById('quantity').value;
-            fetch(`/trade?type=sell&ticker=${ticker}&quantity=${quantity}`)
+            fetch(`/trade?type=${type}&ticker=${ticker}&quantity=${quantity}`)
                 .then(response => response.json())
-                .then(data => {
-                    alert(data.success || data.error);
-                    updateBalanceDisplay();
-                });
+                .then(() => { updateBalanceDisplay(); updateTables(); });
         }
 
         function resetAccount() {
             fetch(`/reset`)
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.success);
-                    updateBalanceDisplay();
-                });
+                .then(() => { updateBalanceDisplay(); updateTables(); });
         }
 
-        window.onload = updateBalanceDisplay;
+        window.onload = () => { updateBalanceDisplay(); updateTables(); };
+        
     </script>
 </body>
 </html>
