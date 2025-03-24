@@ -4,14 +4,9 @@ import webbrowser
 import yfinance as yf
 import pandas as pd
 from flask import Flask, render_template, request, jsonify
-from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
-# Ensure user_data directory exists
-if not os.path.exists("user_data"):
-    os.makedirs("user_data")
 
 @app.route('/')
 def main():
@@ -41,16 +36,28 @@ def get_stock_data():
     if hist.empty:
         return jsonify({"error": "Invalid ticker or no data available"}), 400
 
-    # Filter market hours: 9:30 AM - 4:00 PM EST
-    market_open = "09:30"
-    market_close = "20:00"
-
-    hist = hist.between_time(market_open, market_close)
+    # Filter only market hours
+    hist = hist.between_time("09:30", "16:00")
 
     timestamps = hist.index.strftime('%H:%M').tolist()
     prices = hist['Close'].round(2).tolist()
 
-    return jsonify({"timestamps": timestamps, "prices": prices})
+    # Fetch extra stock details
+    stock_info = stock.info
+    extra_data = {
+        "Previous Close": stock_info.get("previousClose"),
+        "Open": stock_info.get("open"),
+        "Day High": stock_info.get("dayHigh"),
+        "Day Low": stock_info.get("dayLow"),
+        "Beta": stock_info.get("beta"),
+        "52-Week High": stock_info.get("fiftyTwoWeekHigh"),
+        "52-Week Low": stock_info.get("fiftyTwoWeekLow"),
+        "Market Cap": stock_info.get("marketCap"),
+        "Volume": stock_info.get("volume"),
+        "Avg Volume": stock_info.get("averageVolume"),
+    }
+
+    return jsonify({"timestamps": timestamps, "prices": prices, "extra_data": extra_data})
 
 def open_browser():
     webbrowser.open("http://127.0.0.1:5000")

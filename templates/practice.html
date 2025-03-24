@@ -56,6 +56,18 @@
             width: 100% !important;
             height: 100% !important;
         }
+        .extra-data {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--card);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+        .extra-data h3 {
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +84,10 @@
         <div class="chart-container">
             <canvas id="stockChart"></canvas>
         </div>
+        <div id="extraData" class="extra-data" style="display: none;">
+            <h3>Stock Information</h3>
+            <ul id="extraDataList"></ul>
+        </div>
     </div>
     <script>
         let stockChart = null;
@@ -85,13 +101,12 @@
                         alert("Error fetching stock data");
                         return;
                     }
-                    const maxPoints = 500;
-                    let timestamps = data.timestamps.slice(-maxPoints);
-                    let prices = data.prices.slice(-maxPoints);
-                    drawChart(timestamps, prices, ticker);
+                    drawChart(data.timestamps, data.prices, ticker);
+                    displayExtraData(data.extra_data);
                 })
                 .catch(error => console.error("Error:", error));
         }
+
         function drawChart(timestamps, prices, ticker) {
             if (stockChart) stockChart.destroy();
             const ctx = document.getElementById('stockChart').getContext('2d');
@@ -131,22 +146,30 @@
                             title: {
                                 display: true,
                                 text: 'Time'
-                            },
-                            ticks: {
-                                autoSkip: true,
-                                maxTicksLimit: 6
                             }
                         },
                         y: {
                             title: {
                                 display: true,
                                 text: 'Price ($)'
-                            },
-                            beginAtZero: false
+                            }
                         }
                     }
                 }
             });
+        }
+
+        function displayExtraData(extraData) {
+            const extraDataList = document.getElementById('extraDataList');
+            extraDataList.innerHTML = "";
+            for (let key in extraData) {
+                if (extraData[key] !== null) {
+                    const li = document.createElement("li");
+                    li.textContent = `${key}: ${extraData[key]}`;
+                    extraDataList.appendChild(li);
+                }
+            }
+            document.getElementById('extraData').style.display = "block";
         }
     </script>
 </body>
