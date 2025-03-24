@@ -42,6 +42,10 @@ def main():
 def practice():
     return render_template('practice.html')
 
+@app.route('/learn')  # Added route for learn.html
+def learn():
+    return render_template('learn.html')
+
 @app.route('/balance', methods=['GET'])
 def balance():
     return jsonify({"balance": get_balance()})
