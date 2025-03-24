@@ -3,105 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Practice Trading</title>
+    <title>Stock Chart</title>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #60a5fa; /* Lighter blue */
+            --primary: #60a5fa;
             --primary-dark: #3b82f6;
             --text: #1e293b;
             --background: #f8fafc;
             --card: #ffffff;
             --border: #e2e8f0;
             --shadow: rgba(0, 0, 0, 0.08);
-            --shadow-hover: rgba(0, 0, 0, 0.15);
         }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
         body {
             font-family: 'Lexend', sans-serif;
             background-color: var(--background);
             color: var(--text);
-            line-height: 1.6;
             margin: 0;
             padding: 0;
         }
-        
         .navbar {
             background: var(--primary);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: center;
-            gap: 3rem;
+            padding: 1rem;
+            text-align: center;
             box-shadow: 0 2px 10px var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
-        
         .navbar a {
             color: white;
             text-decoration: none;
             font-size: 1rem;
             font-weight: 500;
             padding: 0.5rem 1rem;
-            border-radius: 4px;
             transition: all 0.2s ease;
         }
-        
-        .navbar a:hover {
-            background-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-        }
-        
-        .content {
-            margin: 3rem auto;
-            width: 90%;
-            max-width: 1000px;
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
             background: var(--card);
-            padding: 2.5rem;
             border-radius: 12px;
             box-shadow: 0 4px 20px var(--shadow);
-            transition: all 0.3s ease;
+            text-align: center;
         }
-        
-        .content:hover {
-            box-shadow: 0 8px 30px var(--shadow-hover);
-            transform: translateY(-5px);
+        .chart-container {
+            width: 700px;
+            height: 400px;
+            margin: auto;
+            position: relative;
         }
-        
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 1.5rem;
-            color: var(--text);
-            font-weight: 700;
-        }
-        
-        p {
-            margin-bottom: 1.5rem;
-            font-size: 1.1rem;
-            color: var(--text);
-        }
-        
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 1rem;
-                gap: 1rem;
-            }
-            
-            .content {
-                padding: 1.5rem;
-                margin: 2rem auto;
-            }
-            
-            h1 {
-                font-size: 1.8rem;
-            }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
         }
     </style>
 </head>
@@ -112,9 +65,89 @@
         <a href="/practice">Practice Trading</a>
         <a href="/simulator">Simulator</a>
     </div>
-    <div class="content">
-        <h1>Practice Trading</h1>
-        <p>Practice tools will go here...</p>
+    <div class="container">
+        <h1>Stock Price Chart</h1>
+        <input type="text" id="ticker" placeholder="Enter stock ticker (e.g. AAPL)">
+        <button onclick="fetchStockData()">Show Chart</button>
+        <div class="chart-container">
+            <canvas id="stockChart"></canvas>
+        </div>
     </div>
+    <script>
+        let stockChart = null;
+        function fetchStockData() {
+            const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+            if (!ticker) return alert("Enter a valid stock ticker");
+            fetch(`/stock?ticker=${ticker}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || !data.prices) {
+                        alert("Error fetching stock data");
+                        return;
+                    }
+                    const maxPoints = 500;
+                    let timestamps = data.timestamps.slice(-maxPoints);
+                    let prices = data.prices.slice(-maxPoints);
+                    drawChart(timestamps, prices, ticker);
+                })
+                .catch(error => console.error("Error:", error));
+        }
+        function drawChart(timestamps, prices, ticker) {
+            if (stockChart) stockChart.destroy();
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: `${ticker} Price`,
+                        data: prices,
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Price: $${context.raw.toFixed(2)}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 6
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Price ($)'
+                            },
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
