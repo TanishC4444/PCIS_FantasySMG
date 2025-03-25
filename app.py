@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 USER_DATA_FILE = "users.csv"
+SOLD_DATA_FILE = "sold.csv"
 STARTING_BALANCE = 100000.00  # Initial balance
 
 # Ensure user data file exists
@@ -18,6 +19,10 @@ if not os.path.exists(USER_DATA_FILE) or os.stat(USER_DATA_FILE).st_size == 0:
     df.to_csv(USER_DATA_FILE, index=False)
     with open("balance.txt", "w") as f:
         f.write(str(STARTING_BALANCE))
+
+if not os.path.exists(SOLD_DATA_FILE):
+    pd.DataFrame(columns=["Ticker", "Date Bought", "Quantity", "Price Bought", "Sell Price", "Profit", "Sell Date"]).to_csv(SOLD_DATA_FILE, index=False)
+    
 
 # Function to get balance
 def get_balance():
@@ -110,29 +115,55 @@ def trade_stock():
     current_price = round(stock.history(period="1d", interval="1m").iloc[-1]['Close'], 2)
     total_cost = round(quantity * current_price, 2)
 
-    balance = get_balance()
-    if trade_type == "buy" and total_cost > balance:
-        return jsonify({"error": "Insufficient funds"}), 400
-
     df = pd.read_csv(USER_DATA_FILE)
-    new_trade = pd.DataFrame({
-        "Ticker": [ticker], 
-        "Date Bought": [datetime.now().strftime('%Y-%m-%d %H:%M')],
-        "Quantity": [quantity], 
-        "Price Bought": [round(current_price, 2)], 
-        "Current Value": [round(current_price * quantity, 2)],
-        "Earnings": [0], 
-        "Change %": [0], 
-        "Status": [trade_type.upper()]
-    })
-    df = pd.concat([df, new_trade], ignore_index=True)
-    df.to_csv(USER_DATA_FILE, index=False)
 
     if trade_type == "buy":
-        update_balance(-total_cost)  
-    elif trade_type == "sell":
-        update_balance(total_cost)  
+        balance = get_balance()
+        if total_cost > balance:
+            return jsonify({"error": "Insufficient funds"}), 400
 
+        new_trade = pd.DataFrame({
+            "Ticker": [ticker], 
+            "Date Bought": [datetime.now().strftime('%Y-%m-%d %H:%M')],
+            "Quantity": [quantity], 
+            "Price Bought": [current_price], 
+            "Current Value": [total_cost],
+            "Earnings": [0], 
+            "Change %": [0], 
+            "Status": ["OWNED"]
+        })
+        df = pd.concat([df, new_trade], ignore_index=True)
+        update_balance(-total_cost)
+
+    elif trade_type == "sell":
+        stock_rows = df[(df["Ticker"] == ticker) & (df["Quantity"] > 0)]
+
+        if stock_rows.empty:
+            return jsonify({"error": "No shares available to sell"}), 400
+
+        stock_row = stock_rows.iloc[0]  
+        buy_price = stock_row["Price Bought"]
+        profit = (current_price - buy_price) * quantity
+
+        # Save sale to sold.csv
+        sold_df = pd.read_csv(SOLD_DATA_FILE)
+        new_sale = pd.DataFrame({
+            "Ticker": [ticker], 
+            "Date Bought": [stock_row["Date Bought"]],
+            "Quantity": [quantity], 
+            "Price Bought": [buy_price], 
+            "Sell Price": [current_price],
+            "Profit": [profit],
+            "Sell Date": [datetime.now().strftime('%Y-%m-%d %H:%M')]
+        })
+        sold_df = pd.concat([sold_df, new_sale], ignore_index=True)
+        sold_df.to_csv(SOLD_DATA_FILE, index=False)
+
+        # Remove sold stocks from users.csv
+        df = df[df["Ticker"] != ticker]
+        update_balance(total_cost)
+
+    df.to_csv(USER_DATA_FILE, index=False)
     return jsonify({"success": f"{trade_type.capitalize()} {quantity} shares of {ticker} at ${current_price:.2f}", "balance": get_balance()})
 
 @app.route('/reset', methods=['GET'])
