@@ -7,11 +7,12 @@ from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
-USER_DATA_FILE = "users.csv"
-SOLD_DATA_FILE = "sold.csv"
-STARTING_BALANCE = 100000.00  # Initial balance
+# Use environment variables for file paths with fallbacks
+USER_DATA_FILE = os.environ.get('USER_DATA_FILE', "users.csv")
+SOLD_DATA_FILE = os.environ.get('SOLD_DATA_FILE', "sold.csv")
+STARTING_BALANCE = float(os.environ.get('STARTING_BALANCE', 100000.00))
 
 # Ensure user data file exists
 if not os.path.exists(USER_DATA_FILE) or os.stat(USER_DATA_FILE).st_size == 0:
